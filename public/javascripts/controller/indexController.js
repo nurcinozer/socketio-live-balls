@@ -1,7 +1,7 @@
 app.controller('indexController',['$scope', 'indexFactory', ($scope, indexFactory) => {
 
-    $scope.messages = [];
-    $scope.players = {};
+    $scope.messages = [ ];
+    $scope.players = { };
 
     $scope.init = () => {
         const username = prompt('please enter username');
@@ -22,7 +22,7 @@ app.controller('indexController',['$scope', 'indexFactory', ($scope, indexFactor
             .then((socket) => {
                 socket.emit('newUser', { username });
 
-                socket.on('initPLayers', (players) => {
+                socket.on('initPlayers', (players) => {
                     $scope.players = players;
                     $scope.$apply();
                 });
@@ -33,10 +33,11 @@ app.controller('indexController',['$scope', 'indexFactory', ($scope, indexFactor
                             code: 0, // server or user message
                             message: 1 // login or disconnect message
                         }, // info
-                        username: data.username
+                        username: data.username,
                     };
 
                     $scope.messages.push(messageData);
+                    $scope.players[data.id] = data;
                     $scope.$apply();
                 });
 
@@ -46,14 +47,49 @@ app.controller('indexController',['$scope', 'indexFactory', ($scope, indexFactor
                             code: 0,
                             message: 0
                         }, //info
-                        username: data.username
+                        username: data.username,
                     };
 
                     $scope.messages.push(messageData);
+                    delete $scope.players[data.id];
                     $scope.$apply();
-
-                    console.log(user);
                 });
+
+                socket.on('animate', data => {
+                    $('#'+ data.socketId).animate({ 'left': data.x, 'top': data.y }, () => {
+                        animate = false;
+                    });
+                });
+
+                let animate = false;
+                $scope.onClickPlayer = ($event) => {
+                  if(!animate){
+                      let x = $event.offsetX;
+                      let y = $event.offsetY;
+
+                      socket.emit('animate', { x, y });
+
+                      animate = true
+                      $('#'+ socket.id).animate({ 'left':  x, 'top': y}, () => {
+                          animate = false;
+                      });
+                  }
+                };
+
+                $scope.newMessage = () => {
+                  let message = $scope.message;
+                    const messageData = {
+                        type: {
+                            code: 1, // server or user message
+                        },
+                        text: message,
+                        username: username,
+                    };
+
+                    $scope.messages.push(messageData);
+                    $scope.message = '';
+                };
+
             }).catch((err) => {
             console.log(err);
             });
