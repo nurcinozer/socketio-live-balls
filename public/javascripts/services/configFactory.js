@@ -1,6 +1,6 @@
-app.factory('configFactory', [() => {
+app.factory('configFactory', ['$http',($http) => {
     const getConfig = () => {
-      return new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             $http
                 .get('/getEnv')
                 .then((data) => {
